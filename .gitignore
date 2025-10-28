@@ -1,0 +1,94 @@
+
+#include <windows.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+
+using namespace std;
+
+class Ken {
+public:
+    int one = 1000;
+    int two = 7;
+    int stopKey = 0;  // код клавиши 
+
+    void priv() {
+        asd(one, two);
+    }
+
+    int SearchKey() {
+        cout << "Press any key to bind start/stop..." << endl;
+        while (true) {
+            for (int i = 8; i <= 255; i++) {
+                if (GetAsyncKeyState(i) & 0x8000) {  // биндим клавишу
+                    stopKey = i;
+                    cout << "Key bound: " << GetKeyName(i) << endl;
+                    return stopKey;
+                }
+            }
+            Sleep(50);
+        }
+    }
+
+private:
+    void jopa(BYTE vkCode) {
+        keybd_event(vkCode, 0, 0, 0);
+        keybd_event(vkCode, 0, KEYEVENTF_KEYUP, 0);
+        Sleep(delay);
+    }
+
+    void sendString(const string& text) {
+        for (char c : text) {
+            if (c >= '0' && c <= '9') {
+                jopa(0x30 + (c - '0'));
+            }
+            else if (c == ' ') {
+                jopa(VK_SPACE);
+            }
+            else if (c == '-') {
+                jopa(VK_OEM_MINUS);
+            }
+            else if (c == '=') {
+                jopa(VK_OEM_PLUS);
+                keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+            }
+        }
+        jopa(VK_RETURN);
+    }
+
+    void asd(int x, int y) {
+        while (x > 0) {
+            int res = x - y;
+            stringstream expression;
+            expression << x << " - " << y << " = " << res;
+            cout << expression.str() << endl;
+            sendString(expression.str());
+            x = res;
+            if (stopKey != 0 && (GetAsyncKeyState(stopKey) & 0x8000)) {
+                cout << "Stop key pressed. Exiting loop." << endl;
+                break;
+            }
+        }
+    }
+
+    
+    string GetKeyName(int vkCode) {
+        char keyName[50];
+        if (vkCode >= 'A' && vkCode <= 'Z') {
+            return string(1, static_cast<char>(vkCode));
+        }
+        else {
+            return "Key " + to_string(vkCode);
+        }
+    }
+
+    int delay = 5;
+};
+
+int main() {
+    Ken obj;
+    cout << "Bind a key to start/stop:" << endl;
+    obj.SearchKey();
+    obj.priv();
+    return 0;
+}
